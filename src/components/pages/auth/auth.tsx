@@ -15,9 +15,6 @@ const Auth: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   const auth = getAuth();
   const navigate = useNavigate();
 
@@ -42,18 +39,15 @@ const Auth: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     try {
       // Registrar al usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log("Usuario registrado:", userCredential.user);
 
-      setSuccess("Usuario registrado con éxito. Redirigiendo...");
-
-    } catch (err: any) {
-      setError(err.message); // Mostrar mensaje de error en caso de fallo
+    } catch (err: unknown) {
+      console.log(err);
+       // Mostrar mensaje de error en caso de fallo
     }
   };
 

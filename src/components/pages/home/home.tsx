@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { useUserContext } from "../../../provider/provider";
 import ItemList from "../../layout/list";
@@ -5,20 +6,28 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
+interface UserData {
+  uid: string;
+  Name?: string;
+  [key: string]: any; // Para propiedades adicionales opcionales
+}
+
 const Home: React.FC = () => {
+
   const { user } = useUserContext();
-  const [userData, setUserData] = useState<object>();
+  const [userData, setUserData] = useState<UserData | null>(null);
   const auth = getAuth();
   const navigate = useNavigate();
 
-  const fetchUserFromFirestore = async (uid: string) => {
+
+  const fetchUserFromFirestore = async (uid: string): Promise<UserData | null> => {
     const db = getFirestore(); // Referencia a Firestore
     const userRef = doc(db, "users", uid); // Referencia al documento del usuario en la colección 'users'
 
     try {
       const docSnapshot = await getDoc(userRef); // Obtener el documento del usuario
       if (docSnapshot.exists()) {
-        return docSnapshot.data();
+        return docSnapshot.data() as UserData;
       } else {
         console.log("Usuario no encontrado en Firestore.");
         return null;
@@ -33,8 +42,6 @@ const Home: React.FC = () => {
   
     try {
       await signOut(auth);
-      console.log("Sesión cerrada exitosamente");
-  
       // Eliminar datos del usuario del localStorage si se guardaron
       localStorage.removeItem("user");
       localStorage.removeItem("guest");
@@ -47,14 +54,17 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUserFromFirestore(user?.uid).then((userData) => {
-      console.log(user.uid);
-      
-      if (userData) {
-        setUserData(userData);
-        console.log("Datos del usuario desde Firestore:", userData);
-      }
-    });
+    if (user && user.uid) {
+      fetchUserFromFirestore(user.uid).then((data) => {
+        console.log(user.uid);
+        if (data) {
+          setUserData(data);
+          console.log("Datos del usuario desde Firestore:", data);
+        }
+      });
+    } else {
+      console.error("El usuario no está definido o no tiene UID");
+    }
   }, [user]);
 
   return (
@@ -71,7 +81,7 @@ const Home: React.FC = () => {
         </button>
       </header>
       <section>
-        <ItemList isAuthenticated={true} userId={user?.uid} />
+        <ItemList isAuthenticated={!!user?.uid} userId={user?.uid || ""}/>
       </section>
     </main>
   );

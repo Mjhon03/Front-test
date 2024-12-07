@@ -1,29 +1,45 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, ReactNode, useContext } from "react";
+
+// Define la estructura del usuario
+interface User {
+  uid: string;
+  [key: string]: any; // Permite otras propiedades si es necesario
+}
 
 // Define la estructura de los datos del contexto
 interface ContextData {
-  user: string | null; 
+  user: User | null;
+  uid: string | null;
 }
 
 const defaultContextData: ContextData = {
   user: null,
+  uid: null,
 };
 
 // Crea el contexto con el tipo adecuado
-export const context = createContext<ContextData>(defaultContextData);
+export const UserContext = createContext<ContextData>(defaultContextData);
 
 // Define el tipo de las propiedades del proveedor
 interface ProviderProps {
-  children: ReactNode; 
+  children: ReactNode;
 }
 
 // Implementa el proveedor con el tipado
-export const provider: React.FC<ProviderProps> = ({ children }) => {
+export const UserProvider: React.FC<ProviderProps> = ({ children }) => {
+  // Recupera el usuario desde localStorage
+  const storedUser = localStorage.getItem("user");
+  const user: User | null = storedUser ? JSON.parse(storedUser) : null;
+
   const data: ContextData = {
-    user: JSON.parse(localStorage.getItem("user") || "null"),
+    user,
+    uid: user?.uid || null,
   };
 
-  return <context.Provider value={data}>{children}</context.Provider>;
+  return <UserContext.Provider value={data}>{children}</UserContext.Provider>;
 };
 
-export const useUserContext = () => useContext(context);
+// Hook para usar el contexto
+export const useUserContext = () => useContext(UserContext);
